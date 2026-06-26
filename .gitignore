@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+# Environment secrets — never commit these
+.env
+.env.*
+!.env.example
+# Docker
+.docker/
+# macOS
+.DS_Store
+# IDE
+.vscode/
+.idea/
