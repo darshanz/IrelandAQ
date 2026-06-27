@@ -1,18 +1,19 @@
 from rest_framework import serializers
 from .models import Station, AirQualityReading
 
-class AirQualiityReadingSerializer(serializers.ModelSerialzier):
+class AirQualityReadingSerializer(serializers.ModelSerializer):
     class Meta:
         model = AirQualityReading
         field = [
             "id", "timestamp", "pm25", "pm10", "no2", "o3", "co", "aqi",
         ]
 
-class StationSerializer(serializers.ModelSerialzier):
+class StationSerializer(serializers.ModelSerializer):
     latitude = serializers.SerializerMethodField()
     longitude = serializers.SerializerMethodField()
 
     class Meta:
+        model = Station
         fields = [
             "id", "openaq_id", "name", "city",
             "country",  "latitude",

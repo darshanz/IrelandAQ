@@ -3,7 +3,7 @@ from .models import Station, AirQualityReading
 
 
 @admin.register(Station)
-class StationAdmin(admin.OSMGeoAdmin):
+class StationAdmin(admin.GISModelAdmin):
     list_display= ['name', 'city', 'openaq_id', 'is_active', 'last_updated']
     list_filter= ['city', 'is_active', 'country']
     search_fields = ['name', 'city', 'openaq_id']
