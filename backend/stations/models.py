@@ -40,7 +40,12 @@ class AirQualityReading(models.Model):
 
     class Meta:
         ordering = ['-timestamp']
-        unique_together = ['station', 'timestamp']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['station', 'timestamp'],
+                name='unique_station_timestamp',
+            )
+        ]
 
     def __str__(self):
         return f"{self.station.name} @ {self.timestamp:%Y-%m-%d %H:%M}"
