@@ -26,7 +26,6 @@ DEBUG = env('DEBUG', default=True)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
-
 # Application definition
 
 INSTALLED_APPS = [
