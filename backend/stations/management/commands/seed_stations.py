@@ -9,41 +9,44 @@ import random
 Until ingestion with airflow is implemented, 
  just seeding with sample data
 """
+# OpenAQ v3 uses numeric location IDs (not EPA string codes).
+# These are active Irish EPA stations with pm25 sensors, confirmed against
+# the OpenAQ v3 API in June 2026 (all updated same day).
 IRISH_STATIONS = [
     {
-        "openaq_id" : "EPA-69",
-        "name" : "Pearse Street, Dublin 2",
-        "city" : "Dublin",
-        "lat" : 53.3451,
-        "lon" : -6.2543,
+        "openaq_id": "4858",
+        "name": "Dublin Winetavern Street",
+        "city": "Dublin",
+        "lat": 53.3417,
+        "lon": -6.2889,
     },
     {
-        "openaq_id" : "EPA-56",
-        "name" : "South Link Road, Cork",
-        "city" : "Cork",
-        "lat" : 51.8785,
-        "lon" : -8.4649,
+        "openaq_id": "2162824",
+        "name": "Cork UCC Distillery Fields",
+        "city": "Cork",
+        "lat": 51.9001,
+        "lon": -8.4864,
     },
     {
-        "openaq_id" : "EPA-39",
-        "name" : "People's Park, Limerick",
-        "city" : "Limerick",
-        "lat" : 52.6587,
-        "lon" : -8.6287,
-    },
-    {
-        "openaq_id": "EPA-87",
-        "name": "Merchants Quay, Waterford",
+        "openaq_id": "2162821",
+        "name": "Waterford City Paddy Brownes Road",
         "city": "Waterford",
-        "lat": 52.2638,
-        "lon": -7.1180,
+        "lat": 52.2471,
+        "lon": -7.1516,
     },
     {
-        "openaq_id": "EPA-25",
-        "name": "Ennis, Co. Clare",
-        "city": "Ennis",
-        "lat": 52.8432,
-        "lon": -8.9893,
+        "openaq_id": "2162811",
+        "name": "Louth Dundalk Meadow Grove",
+        "city": "Dundalk",
+        "lat": 54.0031,
+        "lon": -6.3926,
+    },
+    {
+        "openaq_id": "6406",
+        "name": "Wexford Enniscorthy Parnell Road",
+        "city": "Wexford",
+        "lat": 52.4985,
+        "lon": -6.5707,
     },
 ]
 

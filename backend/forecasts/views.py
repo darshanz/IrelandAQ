@@ -13,6 +13,25 @@ from .models import ForecastRun, ForecastPrediction
 from .serializers import ForecastRunSerializer, ForecastPredictionSerializer
 
 
+def _airflow_headers() -> dict:
+    """
+    Airflow 3.x uses bearer token auth for the REST API.
+    Exchange username/password for a short-lived JWT via POST /auth/token.
+    """
+    airflow_url = os.environ.get('AIRFLOW_BASE_URL', '')
+    resp = http_client.post(
+        f"{airflow_url}/auth/token",
+        json={
+            "username": os.environ.get('AIRFLOW_USER', 'admin'),
+            "password": os.environ.get('AIRFLOW_PASSWORD', ''),
+        },
+        timeout=10,
+    )
+    resp.raise_for_status()
+    token = resp.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
 class ForecastViewSet(viewsets.GenericViewSet):
     """
     Handles forecast pipeline operations.
@@ -47,17 +66,9 @@ class ForecastViewSet(viewsets.GenericViewSet):
         # airflow is configured
         try:
             resp = http_client.post(
-                f"{airflow_url}/api/v1/dags/forecast_dag/dagRuns",
-                json={
-                    "conf": {
-                        "station_id": station.id,
-                        "run_db_id":  run.id,
-                    }
-                },
-                auth=(
-                    os.environ.get('AIRFLOW_USER', 'admin'),
-                    os.environ.get('AIRFLOW_PASSWORD', ''),
-                ),
+                f"{airflow_url}/api/v2/dags/forecast_dag/dagRuns",
+                json={"logical_date": None, "conf": {"station_id": station.id, "run_db_id": run.id}},
+                headers=_airflow_headers(),
                 timeout=10,
             )
             resp.raise_for_status()
@@ -91,11 +102,8 @@ class ForecastViewSet(viewsets.GenericViewSet):
         if run.dag_run_id and airflow_url:
             try:
                 resp = http_client.get(
-                    f"{airflow_url}/api/v1/dags/forecast_dag/dagRuns/{run.dag_run_id}",
-                    auth=(
-                        os.environ.get('AIRFLOW_USER', 'admin'),
-                        os.environ.get('AIRFLOW_PASSWORD', ''),
-                    ),
+                    f"{airflow_url}/api/v2/dags/forecast_dag/dagRuns/{run.dag_run_id}",
+                    headers=_airflow_headers(),
                     timeout=10,
                 )
                 resp.raise_for_status()

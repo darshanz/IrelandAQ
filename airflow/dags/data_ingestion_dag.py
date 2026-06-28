@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import pendulum
 import requests
 import psycopg2.extras
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 
 from db_utils import get_conn
 
@@ -16,25 +16,50 @@ OPENAQ_HEADERS = {"X-API-Key": os.environ.get("OPENAQ_API_KEY", "")}
 
 
 def fetch_latest_pm25(openaq_id: str) -> dict | None:
+    """
+    OpenAQ v3 /latest returns raw sensor readings without parameter names.
+    We first resolve which sensorsId corresponds to pm25 from the location
+    detail, then match it in the /latest response.
+    """
     try:
+        # Step 1: find the pm25 sensor ID for this location
+        loc_resp = requests.get(
+            f"{OPENAQ_BASE}/locations/{openaq_id}",
+            headers=OPENAQ_HEADERS,
+            timeout=15,
+        )
+        if loc_resp.status_code == 404:
+            log.warning("OpenAQ location %s not found, skipping.", openaq_id)
+            return None
+        loc_resp.raise_for_status()
+
+        sensors = loc_resp.json().get("results", [{}])[0].get("sensors", [])
+        pm25_sensor_ids = {
+            s["id"] for s in sensors
+            if s.get("parameter", {}).get("name") == "pm25"
+        }
+        if not pm25_sensor_ids:
+            log.warning("No pm25 sensor found for location %s", openaq_id)
+            return None
+
+        # Step 2: get latest readings and find the pm25 one
         resp = requests.get(
             f"{OPENAQ_BASE}/locations/{openaq_id}/latest",
             headers=OPENAQ_HEADERS,
             timeout=15,
         )
-        if resp.status_code == 404:
-            log.warning("OpenAQ location %s not found, skipping.", openaq_id)
-            return None
         resp.raise_for_status()
         results = resp.json().get("results", [])
     except Exception as exc:
         log.warning("OpenAQ request failed for %s: %s", openaq_id, exc)
         return None
 
-    # find pm25
     for reading in results:
-        if reading.get("parameter") == "pm25":
-            return {"value": reading["value"], "last_updated": reading["lastUpdated"]}
+        if reading.get("sensorsId") in pm25_sensor_ids:
+            return {
+                "value": reading["value"],
+                "last_updated": reading["datetime"]["utc"],
+            }
     return None
 
 
@@ -70,11 +95,11 @@ def data_ingestion_dag():
                         skipped += 1
                         continue
 
-                    # upsert
                     cur.execute(
                         """
-                        INSERT INTO stations_airqualityreading 
-                        (station_id, timestamp, pm25, aqi, recorded_at) VALUES (%s, %s, %s, %s, NOW())
+                        INSERT INTO stations_airqualityreading
+                        (station_id, timestamp, pm25, aqi)
+                        VALUES (%s, %s, %s, %s)
                         ON CONFLICT (station_id, timestamp) DO NOTHING
                         """,
                         (
@@ -98,7 +123,6 @@ def data_ingestion_dag():
         log.info("Ingestion complete. Inserted: %d, Skipped: %d", inserted, skipped)
         return {"inserted": inserted, "skipped": skipped}
 
-    # Wire the tasks
     stations = get_active_stations()
     ingest_station_readings(stations)
 
