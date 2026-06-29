@@ -17,3 +17,21 @@ export async function loginUser(
   if (!res.ok) throw new Error('Invalid credentials')
   return res.json()
 }
+
+export interface Station {
+  id: number
+  openaq_id: string
+  name: string
+  city: string
+  latitude: number
+  longitude: number
+  current_aqi: number | null
+}
+
+export async function getStations(token: string): Promise<Station[]> {
+  const res = await fetch(`${API}/api/stations/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error('Failed to fetch stations')
+  return res.json()
+}
