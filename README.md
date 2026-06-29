@@ -10,12 +10,15 @@
 
 Air quality monitoring and forecasting platform for Ireland, built with Django, Apache Airflow, and MLflow.
 
+![architecture.png](architecture.png)
+
 ## Stack
 
 - **Django + PostGIS** — REST API and station data
 - **Airflow** — hourly ingestion from [OpenAQ v3](https://api.openaq.org)
 - **MLflow** — model tracking and registry
 - **Docker Compose** — local development
+-  **Next.js** — frontend
 
 ## Quick start
 
