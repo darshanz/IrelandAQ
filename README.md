@@ -20,6 +20,9 @@ Air quality monitoring and forecasting platform for Ireland, built with Django, 
 - **Docker Compose** — local development
 -  **Next.js** — frontend
 
+![screenshot_map.png](screenshot_map.png)
+Air Quality Map
+
 ## Quick start
 
 ```bash

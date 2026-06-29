@@ -131,13 +131,15 @@ def forecast_dag():
         residuals = y - y_pred
         mae = mean_absolute_error(y, y_pred)
         rmse = mean_squared_error(y, y_pred) ** 0.5
-        residual_std = float(np.std(residuals))
+        residual_std = max(float(np.std(residuals)), 1.5)  # floor so confidence band is visible
 
         log.info("Train MAE=%.3f, RMSE=%.3f, ResidualStd=%.3f", mae, rmse, residual_std)
 
-        # Build 24-hour forecast iteratively.
-        # Start from the last known reading and step forward one hour at a time.
-        last_row = df.iloc[-1].copy()
+        # Build 24-hour forecast iteratively with exponential smoothing.
+        # Each raw prediction is smoothed against the previous step before being
+        # fed back as the next lag — this breaks the amplification loop that
+        # causes linear models to oscillate when iterated over long horizons.
+        ALPHA = 0.4   # smoothing weight on raw prediction (1-alpha on prev smoothed)
         history_pm25 = df["pm25"].tolist()
         predictions = []
         last_ts = df["timestamp"].iloc[-1]
@@ -147,19 +149,20 @@ def forecast_dag():
             row = {
                 "hour_sin": np.sin(2 * np.pi * future_ts.hour / 24),
                 "hour_cos": np.cos(2 * np.pi * future_ts.hour / 24),
-                "dow_sin": np.sin(2 * np.pi * future_ts.dayofweek / 7),
-                "dow_cos": np.cos(2 * np.pi * future_ts.dayofweek / 7),
-                "lag_1h": history_pm25[-1],
-                "lag_2h": history_pm25[-2] if len(history_pm25) >= 2 else history_pm25[-1],
-                "lag_3h": history_pm25[-3] if len(history_pm25) >= 3 else history_pm25[-1],
+                "dow_sin":  np.sin(2 * np.pi * future_ts.dayofweek / 7),
+                "dow_cos":  np.cos(2 * np.pi * future_ts.dayofweek / 7),
+                "lag_1h":  history_pm25[-1],
+                "lag_2h":  history_pm25[-2] if len(history_pm25) >= 2 else history_pm25[-1],
+                "lag_3h":  history_pm25[-3] if len(history_pm25) >= 3 else history_pm25[-1],
                 "lag_24h": history_pm25[-24] if len(history_pm25) >= 24 else history_pm25[0],
-                "roll_3h": np.mean(history_pm25[-3:]),
-                "roll_6h": np.mean(history_pm25[-6:]),
+                "roll_3h": float(np.mean(history_pm25[-3:])),
+                "roll_6h": float(np.mean(history_pm25[-6:])),
             }
             x_vec = np.array([[row[c] for c in FEATURE_COLS]])
-            pm25_hat = float(model.predict(x_vec)[0])
-
-            pm25_hat = max(0.0, pm25_hat)   # cannot be negative
+            raw_hat = max(0.0, float(model.predict(x_vec)[0]))
+            # Smooth before appending so the next step sees a dampened value
+            pm25_hat = ALPHA * raw_hat + (1 - ALPHA) * history_pm25[-1]
+            history_pm25.append(pm25_hat)
 
             predictions.append({
                 "timestamp": future_ts.isoformat(),
@@ -167,7 +170,6 @@ def forecast_dag():
                 "confidence_lower": max(0.0, pm25_hat - residual_std),
                 "confidence_upper": pm25_hat + residual_std,
             })
-            history_pm25.append(pm25_hat)
 
         return {
             "station_id": run_meta["station_id"],

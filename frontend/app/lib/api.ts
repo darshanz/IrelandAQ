@@ -71,3 +71,24 @@ export async function getForecastStatus(
   if (!res.ok) throw new Error('Failed to fetch forecast status')
   return res.json()
 }
+
+
+export interface Prediction {
+  timestamp: string
+  predicted_pm25: number
+  confidence_lower: number
+  confidence_upper: number
+}
+
+export async function getForecastPredictions(
+  runId: number,
+  token: string
+): Promise<Prediction[]> {
+  const res = await fetch(`${API}/api/forecasts/${runId}/predictions/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error('Failed to fetch predictions')
+  return res.json()
+}
+
+

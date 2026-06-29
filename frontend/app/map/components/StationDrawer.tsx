@@ -10,7 +10,10 @@ import {
   type Station, type ForecastRun,
 } from '../../lib/api'
 
-export const DRAWER_WIDTH = 340
+import { getForecastPredictions, type Prediction } from '../../lib/api'
+import ForecastChart from './ForecastChart'
+
+export const DRAWER_WIDTH = 420
 
 interface Props {
   station: Station | null
@@ -31,11 +34,14 @@ export default function StationDrawer({ station, token }: Props) {
   const [error, setError]     = useState('')
   const pollRef               = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  const [predictions, setPredictions] = useState<Prediction[]>([])
+
   useEffect(() => {
-    setRun(null)
-    setError('')
-    return () => { if (pollRef.current) clearInterval(pollRef.current) }
-  }, [station])
+  setRun(null)
+  setError('')
+  setPredictions([])
+  return () => { if (pollRef.current) clearInterval(pollRef.current) }
+}, [station])
 
   async function handleRunForecast() {
     if (!station) return
@@ -47,7 +53,12 @@ export default function StationDrawer({ station, token }: Props) {
       pollRef.current = setInterval(async () => {
         const updated = await getForecastStatus(newRun.id, token)
         setRun(updated)
-        if (updated.status === 'success' || updated.status === 'failed') {
+        if (updated.status === 'success') {
+          clearInterval(pollRef.current!)
+          pollRef.current = null
+          getForecastPredictions(newRun.id, token).then(setPredictions)
+        }
+        if (updated.status === 'failed') {
           clearInterval(pollRef.current!)
           pollRef.current = null
         }
@@ -116,9 +127,20 @@ export default function StationDrawer({ station, token }: Props) {
               />
               {(run.status === 'queued' || run.status === 'running') && (
                 <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                  Running Forecast, Please wait..
+                  Running forecast pipeline.…
                 </Typography>
               )}
+            </Box>
+          )}
+
+          {run?.status === 'success' && predictions.length === 0 && (
+            <CircularProgress size={20} sx={{ mt: 2 }} />
+          )}
+
+          {run?.status === 'success' && predictions.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>24h AQI Forecast</Typography>
+              <ForecastChart predictions={predictions} />
             </Box>
           )}
         </>
