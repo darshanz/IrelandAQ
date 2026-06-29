@@ -55,7 +55,7 @@ export async function triggerForecast(
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ station: stationId }),
+    body: JSON.stringify({ station_id: stationId }),
   })
   if (!res.ok) throw new Error('Failed to trigger forecast')
   return res.json()

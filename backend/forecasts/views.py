@@ -90,6 +90,10 @@ class ForecastViewSet(viewsets.GenericViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+    # GET /api/forecasts/{id}/
+    def retrieve(self, request, pk=None):
+        return self.pipeline_status(request, pk=pk)
+
     # GET /api/forecasts/{id}/status/
     @action(detail=True, methods=['get'], url_path='status')
     def pipeline_status(self, request, pk=None):

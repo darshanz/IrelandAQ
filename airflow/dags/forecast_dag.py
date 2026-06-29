@@ -16,7 +16,7 @@ from db_utils import get_conn, update_forecast_run
 
 log = logging.getLogger(__name__)
 
-MIN_READINGS = 48    # minimum hours of history required to train
+MIN_READINGS = 36    # minimum hours of history required to train
 FORECAST_HOURS = 24    # hours to predict ahead
 HISTORY_HOURS = 72    # hours of history to use as training window
 

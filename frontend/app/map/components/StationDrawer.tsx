@@ -116,7 +116,7 @@ export default function StationDrawer({ station, token }: Props) {
               />
               {(run.status === 'queued' || run.status === 'running') && (
                 <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                  Airflow is running the pipeline — polling every 4 s…
+                  Running Forecast, Please wait..
                 </Typography>
               )}
             </Box>

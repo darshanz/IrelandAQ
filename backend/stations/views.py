@@ -15,13 +15,9 @@ from .serializers import (
 
 
 class StationViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Station.objects.filter(is_active=True)
-    serializer_class = StationSerializer
+    queryset = Station.objects.filter(is_active=True).prefetch_related('readings')
+    serializer_class = StationDetailSerializer
     permission_classes = [AllowAny]
-
-    def get_seriallizer_class(self):
-        if self.action == 'retrieve':
-            return StationSerializer
 
     @action(detail=False, methods=['get'], url_path='nearby')
     def nearby(self, request):
