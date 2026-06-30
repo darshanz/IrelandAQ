@@ -4,7 +4,7 @@ from .models import Station, AirQualityReading
 class AirQualityReadingSerializer(serializers.ModelSerializer):
     class Meta:
         model = AirQualityReading
-        field = [
+        fields = [
             "id", "timestamp", "pm25", "pm10", "no2", "o3", "co", "aqi",
         ]
 

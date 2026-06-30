@@ -41,7 +41,7 @@ class StationViewSet(viewsets.ReadOnlyModelViewSet):
             location__dwithin = (center, Distance(km=radius_km))
         )
 
-        serializer = self.get_serialiser(stations, many=True)
+        serializer = self.get_serializer(stations, many=True)
         return Response(serializer.data)
 
 
