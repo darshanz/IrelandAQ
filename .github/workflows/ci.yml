@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Django test suite
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_USER:     irelandaq
+          POSTGRES_PASSWORD: irelandaq_pass
+          POSTGRES_DB:       irelandaq
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    # Django env
+    env:
+      DATABASE_URL:            postgresql://irelandaq:irelandaq_pass@localhost:5432/irelandaq
+      SECRET_KEY:              ci-secret-key-not-used-in-production
+      DEBUG:                   "True"
+      ALLOWED_HOSTS:           localhost
+      DJANGO_SETTINGS_MODULE:  config.settings
+
+    # All run steps
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install GDAL system library
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y gdal-bin libgdal-dev
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          # Install everything except GDAL (must match system version)
+          grep -v '^#\|^GDAL' requirements.txt | pip install -r /dev/stdin
+          pip install "GDAL==$(gdal-config --version)"
+
+      - name: Run migrations
+        run: python manage.py migrate --noinput
+
+      - name: Run test suite
+        run: python manage.py test stations forecasts --verbosity=2
