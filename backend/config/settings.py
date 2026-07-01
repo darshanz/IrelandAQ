@@ -84,16 +84,27 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.contrib.gis.db.backends.postgis",
-        "NAME": env('POSTGRES_DB'),
-        "USER": env('POSTGRES_USER'),
-        "PASSWORD": env("POSTGRES_PASSWORD"),
-        "HOST": env("POSTGRES_HOST", default='localhost'),
-        "PORT": env('POSTGRES_PORT', default='5432')
+_database_url = env('DATABASE_URL', default='')
+if _database_url:
+    # CI / any environment that provides a DATABASE_URL connection string
+    DATABASES = {
+        'default': {
+            **env.db('DATABASE_URL'),
+            'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        }
     }
-}
+else:
+    # Local Docker: individual POSTGRES_* vars loaded from .env
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.contrib.gis.db.backends.postgis',
+            'NAME': env('POSTGRES_DB'),
+            'USER': env('POSTGRES_USER'),
+            'PASSWORD': env('POSTGRES_PASSWORD'),
+            'HOST': env('POSTGRES_HOST', default='localhost'),
+            'PORT': env('POSTGRES_PORT', default='5432'),
+        }
+    }
 
 # REST framework
 

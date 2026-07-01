@@ -7,6 +7,10 @@
 ![MLflow](https://img.shields.io/badge/mlflow-3.14.0-0194E2?logo=mlflow&logoColor=white)
 ![PostGIS](https://img.shields.io/badge/postgis-18--3.6-336791?logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-compose-2496ED?logo=docker&logoColor=white)
+[![CI](https://github.com/darshanz/irelandaq/actions/workflows/ci.yml/badge.svg)](https://github.com/darshanz/irelandaq/actions/workflows/ci.yml)
+[![Docker](https://github.com/darshanz/irelandaq/actions/workflows/docker.yml/badge.svg)](https://github.com/darshanz/irelandaq/actions/workflows/docker.yml)
+
+
 
 Air quality monitoring and forecasting platform for Ireland, built with Django, Apache Airflow, and MLflow.
 
